@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "launcher": "scripts/start-docker.sh",
+  "stopper": "scripts/stop-docker.sh",
+  "database": "postgresql",
+  "initialized": false,
+  "host_python_or_node_required": false,
+  "notes": "Host Python orchestrates this test; installed services run only in Docker. Actual Mac hardware not tested."
+}

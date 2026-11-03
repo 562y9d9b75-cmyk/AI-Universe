@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+.venv
+.data
+.run
+**/node_modules
+**/.next
+**/__pycache__
+**/.pytest_cache
+**/*.tsbuildinfo
+**/test-results
+**/playwright-report

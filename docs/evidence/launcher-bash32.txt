@@ -1,0 +1,8 @@
+PASS: missing tools are named; no silent exit or config creation
+PASS: outdated Python is reported
+PASS: installed-but-stopped Docker is explained
+PASS: valid tools pass preflight
+PASS: service exit status preserved; sibling services stopped; owner config preserved
+PASS: Docker-only entrypoint needs no host Python, Node or npm
+PASS: Docker-only entrypoint explains missing Docker
+All 7 launcher checks passed on Bash 3.2.57(1)-release

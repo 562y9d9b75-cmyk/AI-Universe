@@ -44,3 +44,9 @@
 - 面向本机个人使用；未完成公网、多租户、多用户、离线安装和跨平台安装器验收。
 
 人物接入使用本地资产清单与 `EmployeeModel` 的 GLB clips 混合播放。清单目前无人物；动画接口实现不代表已有可验收的人物资产或自然动作。一个 URI 不能重复注册多名员工，缺失时只保留管理标记。
+
+## Docker Desktop 简易入口
+
+`compose.desktop.yaml` 使用独立项目 `ai-universe-desktop` 运行全套服务，宿主机只需 Docker/Compose；`docker/api.Dockerfile` 安装锁定 Python 依赖，`docker/web.Dockerfile` 在 Node24 镜像中构建 Next。API 与 worker 以同一非 root UID 共享成果卷；网页以 node 用户运行。只绑定本机网页端口，数据库与 API 没有宿主机端口。宿主机开发模式的数据不自动迁移到容器版，两个项目分别保留自己的命名卷。
+
+镜像构建可选挂载 `proxy_ca` BuildKit secret，以支持受管环境中的可信代理；不携带会话 CA 到镜像层，也不关闭 TLS 校验。普通 Mac Docker Desktop 无需提供这个构建 secret。`.dockerignore` 排除 .env、私有数据、依赖和日志。

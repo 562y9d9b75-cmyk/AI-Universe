@@ -41,3 +41,19 @@ E2E 操作：浏览器创建所有者、部门、Iris员工、项目、人工核
 - 渗透测试和全面安全审计：未执行；现有安全检查不构成无漏洞保证。
 
 测试结果文件与截图存于 `docs/evidence`。端到端测试只清理自己建立的临时数据库与进程，没有修改所有者业务库。测试警告：当前 Starlette 对 TestClient 的 httpx 兼容层发出弃用警告；9项测试仍完整执行，无跳过。
+
+## Mac 启动问题修复与 Docker-only 交付
+
+用户实际反馈：Mac 没有安装 Python、Node.js、npm 和 Docker；旧 setup.sh 的 `command -v` 遇到缺失即退出，没有解释原因。该反馈不是应用已启动的证据。
+
+修复：新增明确环境检查、版本检查与 Docker 引擎就绪提示；原生启动器移除 Mac Bash 3.2 不支持的 `wait -n`。新增 `启动 AI Universe.command` 和 `scripts/start-docker.sh`，只要求安装并打开 Docker Desktop。Python、Node、PostgreSQL、Redis、API、worker 和 Next 全部在容器运行。没有自动安装系统软件或修改系统安全设置。
+
+验证：
+
+- Bash 5.2 与真正 Bash 3.2.57 容器中，7项启动契约通过：缺失依赖说明、过旧Python、Docker停止、正常预检、子服务退出码/清理/保留配置、无宿主机Python/Node/npm的Docker-only入口，以及缺Docker提示。
+- 通过实际 Docker 构建全部镜像，并启动 PostgreSQL、Redis、API、worker、网页；就绪检查通过。
+- 实际浏览器访问容器中的完整软件，原有整套 E2E 通过，结果与截图位于 `docs/evidence/docker-desktop`。
+- Docker-only 实际交付脚本的启动/停止结果见 `docs/evidence/docker-entrypoint.json`。
+- 首次容器测试发现非 root 用户不能读取宿主机权限为600的源码；修复镜像源码读取权限后复测通过，没有改用 root 运行。
+
+以上为 Linux 中的完整容器与 Bash 3.2 兼容验证，不等同已在用户 Mac 实机验收。用户仍需完成 Docker Desktop 的本机安装并打开引擎；真实 ChatGPT 授权和写实人物仍按原验收清单标为未完成。

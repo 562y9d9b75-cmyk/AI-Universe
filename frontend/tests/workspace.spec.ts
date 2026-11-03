@@ -2,7 +2,8 @@ import {test,expect,Page} from '@playwright/test';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-const evidence=path.resolve('../docs/evidence');
+const evidence=path.resolve(process.env.AIU_E2E_EVIDENCE_DIR||'../docs/evidence');
+fs.mkdirSync(evidence,{recursive:true});
 async function api(page:Page,url:string,method='GET',body?:unknown){const r=await page.request.fetch('/api'+url,{method,headers:{'X-AIU-Request':'1'},...(body?{data:body}:{})});expect(r.ok(),await r.text()).toBeTruthy();return r.json()}
 async function nav(page:Page,label:string){if(await page.getByRole('button',{name:'打开导航',exact:true}).isVisible())await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.locator('nav').getByRole('button',{name:new RegExp('^'+label)}).click()}
 async function waitTask(page:Page,id:string,status:string){await expect.poll(async()=>{const d=await api(page,'/tasks/'+id+'/detail');return d.status},{timeout:20000}).toBe(status);return api(page,'/tasks/'+id+'/detail')}

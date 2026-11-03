@@ -1,0 +1,77 @@
+name: ai-universe-desktop
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: aiu
+      POSTGRES_DB: aiu
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Use scripts/start-docker.sh}
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiu -d aiu"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment: &backend_environment
+      AIU_DATABASE_URL: postgresql+psycopg://aiu:${POSTGRES_PASSWORD}@db:5432/aiu
+      AIU_REDIS_URL: redis://redis:6379/0
+      AIU_DATA_DIR: /data
+      AIU_ORIGIN: http://localhost:${AIU_WEB_PORT:-3000}
+    volumes: ["artifacts_data:/data"]
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    restart: unless-stopped
+  worker:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    command: ["python", "-m", "app.runtime"]
+    environment: *backend_environment
+    volumes: ["artifacts_data:/data"]
+    depends_on:
+      api: {condition: service_healthy}
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    ports: ["127.0.0.1:${AIU_WEB_PORT:-3000}:3000"]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  redis_data:
+  artifacts_data:

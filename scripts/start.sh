@@ -2,7 +2,10 @@
 set -euo pipefail
 export NEXT_TELEMETRY_DISABLED=1
 cd "$(dirname "$0")/.."
-[[ -f .env && -d .venv && -d frontend/.next ]] || { echo '请先运行 ./scripts/setup.sh'; exit 1; }
+source scripts/common.sh
+trap 'aiu_report_error "$LINENO" "$?"' ERR
+aiu_check_environment
+[[ -f .env && -x .venv/bin/python && -f frontend/.next/BUILD_ID ]] || { echo '请先运行 ./scripts/setup.sh'; exit 1; }
 set -a; source .env; set +a
 export AIU_DATA_DIR="${AIU_DATA_DIR:-$PWD/.data}"
 mkdir -p .run
@@ -30,9 +33,21 @@ trap cleanup EXIT INT TERM
 for i in {1..60}; do
  if curl -fsS "http://127.0.0.1:${AIU_WEB_PORT:-3000}/api/health" >/dev/null 2>&1; then
    printf 'AI Universe 已启动。浏览器打开本机端口 %s；首次使用创建唯一的个人账户。\n按 Ctrl+C 停止，数据保留。日志位于 .run/。\n' "${AIU_WEB_PORT:-3000}"
-   wait -n "${children[@]}"; exit $?
+   # macOS ships Bash 3.2, which does not implement wait -n.
+   while true; do
+     for pid in "${children[@]}"; do
+       if ! kill -0 "$pid" 2>/dev/null; then
+         if wait "$pid"; then status=0; else status=$?; fi
+         printf '\n一个必要服务已退出（退出码 %s），正在停止本次启动的其余服务。\n' "$status"
+         aiu_tail_logs
+         [[ "$status" -ne 0 ]] || status=1
+         exit "$status"
+       fi
+     done
+     sleep 1
+   done
  fi
- for pid in "${children[@]}"; do kill -0 "$pid" 2>/dev/null || { tail -30 .run/api.log .run/web.log .run/worker.log; exit 1; }; done
+ for pid in "${children[@]}"; do kill -0 "$pid" 2>/dev/null || { aiu_tail_logs; exit 1; }; done
  sleep 1
 done
-echo '启动未通过健康检查';tail -30 .run/*.log;exit 1
+echo '启动未通过健康检查';aiu_tail_logs;exit 1

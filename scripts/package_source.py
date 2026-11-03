@@ -3,8 +3,8 @@ from pathlib import Path
 import os,zipfile,hashlib,json
 ROOT=Path(__file__).resolve().parents[1]
 SKIP={'node_modules','.next','.git','.venv','.pytest_cache','__pycache__','.data','.run','test-results','playwright-report'}
-files=[ROOT/p for p in ['README.md','LICENSE','.gitignore','.env.example','compose.yaml']]
-for directory in ['backend','frontend','assets','docs','scripts']:
+files=[ROOT/p for p in ['README.md','LICENSE','.gitignore','.env.example','compose.yaml','compose.desktop.yaml','.dockerignore','启动 AI Universe.command']]
+for directory in ['backend','frontend','assets','docs','scripts','docker']:
  for current,dirs,names in os.walk(ROOT/directory):
   dirs[:]=[d for d in dirs if d not in SKIP]
   for name in names:
