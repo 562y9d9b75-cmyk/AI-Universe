@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "method": "SIGKILL worker process group; restart independent worker; wait for expired lease",
+  "attempts": 2,
+  "run_states": [
+    "interrupted",
+    "succeeded"
+  ],
+  "artifacts": 5
+}

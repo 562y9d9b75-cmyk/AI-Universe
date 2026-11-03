@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "launcher": "scripts/start.sh",
+  "runs": [
+    {
+      "attempt": 1,
+      "database": "postgresql",
+      "owner_database_uninitialized": true
+    },
+    {
+      "attempt": 2,
+      "database": "postgresql",
+      "owner_database_uninitialized": true
+    }
+  ]
+}

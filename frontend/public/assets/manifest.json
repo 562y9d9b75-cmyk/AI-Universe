@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "floor": "/assets/headquarters.glb",
+  "workstation": "/assets/workstation.glb",
+  "employees": [],
+  "status": "architectural_floor_only",
+  "license": "CC0-1.0",
+  "note": "No photoreal human models or motion clips are included. Do not mark character acceptance complete."
+}

@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests',timeout:90000,workers:1,reporter:[['list'],['json',{outputFile:'../docs/evidence/playwright-results.json'}]],use:{baseURL:'http://127.0.0.1:3000',headless:true,viewport:{width:1440,height:1000},launchOptions:{executablePath:process.env.AIU_CHROMIUM||'/usr/bin/chromium',args:['--no-sandbox','--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader']},screenshot:'only-on-failure',trace:'retain-on-failure'}});

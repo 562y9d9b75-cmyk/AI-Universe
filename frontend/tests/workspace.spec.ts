@@ -1,0 +1,83 @@
+import {test,expect,Page} from '@playwright/test';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+const evidence=path.resolve('../docs/evidence');
+async function api(page:Page,url:string,method='GET',body?:unknown){const r=await page.request.fetch('/api'+url,{method,headers:{'X-AIU-Request':'1'},...(body?{data:body}:{})});expect(r.ok(),await r.text()).toBeTruthy();return r.json()}
+async function nav(page:Page,label:string){if(await page.getByRole('button',{name:'打开导航',exact:true}).isVisible())await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.locator('nav').getByRole('button',{name:new RegExp('^'+label)}).click()}
+async function waitTask(page:Page,id:string,status:string){await expect.poll(async()=>{const d=await api(page,'/tasks/'+id+'/detail');return d.status},{timeout:20000}).toBe(status);return api(page,'/tasks/'+id+'/detail')}
+
+test('真实 PostgreSQL + 工作进程 + 浏览器完整个人工作流',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await expect(page.getByRole('heading',{name:'创建个人工作空间'})).toBeVisible();
+ await page.getByLabel('用户名',{exact:true}).fill('acceptance-owner');
+ await page.getByLabel('密码（至少 12 位）').fill(process.env.AIU_E2E_PASSWORD||crypto.randomBytes(24).toString('hex'));
+ await page.getByLabel('公司名称',{exact:true}).fill('AI Universe 验收工作空间');
+ await page.getByRole('button',{name:'建立我的 AI 公司'}).click();
+ await expect(page.getByRole('heading',{name:'让每一个想法，有人执行。'})).toBeVisible();
+ expect((await api(page,'/health')).database).toBe('postgresql');
+ await page.screenshot({path:path.join(evidence,'desktop-dashboard.png'),fullPage:true});
+ await nav(page,'AI 员工');
+ await expect(page.locator('.agent-card')).toHaveCount(8);
+ await page.getByRole('button',{name:'创建部门',exact:true}).click();
+ await page.getByLabel('名称',{exact:true}).fill('验收实验室');await page.getByRole('button',{name:'保存配置'}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0);
+ await page.getByRole('button',{name:'自然语言招聘'}).click();
+ await page.getByLabel('招聘要求').fill('创建员工 Iris，岗位：研究助理，负责证据整理');
+ await page.getByRole('button',{name:'创建员工',exact:true}).click();
+ await expect(page.locator('.agent-card')).toHaveCount(9);
+ await nav(page,'项目空间');await page.getByRole('button',{name:'创建项目',exact:true}).click();
+ await page.getByLabel('名称',{exact:true}).fill('季度经营复盘');await page.getByLabel('说明').fill('真实材料、可复核统计与文档交付');await page.getByRole('button',{name:'保存配置'}).click();
+ await expect(page.getByRole('heading',{name:'季度经营复盘'})).toBeVisible();
+ await nav(page,'长期记忆');await page.getByRole('button',{name:'添加记忆'}).click();
+ await page.getByLabel('记忆内容').fill('所有经营结论都需要保留原始输入与出处。');await page.getByLabel('来源 / 证据').fill('所有者验收标准');await page.getByLabel('我已人工核实，可供任务使用').check();await page.getByRole('button',{name:'保存配置'}).click();
+ await expect(page.locator('.memory-card')).toHaveCount(1);
+ await nav(page,'任务中心');await page.getByRole('button',{name:'创建任务',exact:true}).click();
+ await page.getByLabel('任务目标').fill('季度销售数据汇总');
+ await page.getByLabel('协作方式').selectOption('autonomous');
+ await page.getByLabel('所属项目').selectOption({label:'季度经营复盘'});
+ await page.getByLabel('输入材料 / 上下文').fill('渠道,收入\n产品A,120\n产品B,230\n请保留上述原始材料。');
+ for(const f of ['docx','xlsx','pptx','pdf','py','html','zip'])await page.getByLabel(f.toUpperCase(),{exact:true}).check();
+ await page.getByRole('button',{name:'创建并加入执行队列'}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0);
+ const tasks=await api(page,'/tasks');const root=tasks.find((t:any)=>t.title==='季度销售数据汇总');expect(root).toBeTruthy();
+ let detail=await waitTask(page,root.id,'review');
+ expect(detail.dependencies).toHaveLength(2);expect(detail.messages).toHaveLength(2);expect(detail.artifacts).toHaveLength(8);
+ expect(detail.runs[0].input).toContain('所有经营结论');
+ expect(new Set((await api(page,'/tasks')).filter((t:any)=>t.id===root.id||t.parent_id===root.id).map((t:any)=>t.agent_id)).size).toBe(3);
+ await nav(page,'待办审批');await expect(page.locator('.approval-row')).toHaveCount(1);
+ await page.getByRole('button',{name:'审核交付'}).click();await page.getByLabel('审核决定').selectOption('reject');await page.getByLabel('意见（退回必填）').fill('补充修改意见并保留输入出处。');await page.getByRole('button',{name:'提交审核'}).click();
+ await waitTask(page,root.id,'review');
+ await page.waitForTimeout(3200);await page.getByRole('button',{name:'审核交付'}).click();await page.getByRole('button',{name:'提交审核'}).click();
+ detail=await waitTask(page,root.id,'completed');expect(detail.artifacts).toHaveLength(16);
+ for(const artifact of detail.artifacts.slice(-8)){
+  const r=await page.request.get('/api/artifacts/'+artifact.id+'/download');expect(r.ok()).toBeTruthy();const raw=await r.body();expect(raw.length).toBeGreaterThan(100);
+  if(artifact.format==='pdf')expect(raw.subarray(0,4).toString()).toBe('%PDF');
+  if(['docx','xlsx','pptx','zip'].includes(artifact.format))expect(raw.subarray(0,2).toString()).toBe('PK');
+ }
+ await nav(page,'成果资料库');await expect(page.locator('.artifact-card')).toHaveCount(18);
+ await page.getByRole('button',{name:'在线预览',exact:true}).first().click();await expect(page.locator('.document-preview')).toContainText('本地规则执行结果');await page.getByRole('button',{name:'关闭窗口'}).click();
+ const blocked=await api(page,'/tasks','POST',{title:'模型授权边界验收',provider:'chatgpt_plan'});await waitTask(page,blocked.id,'blocked_auth');
+ const budget=await api(page,'/tasks','POST',{title:'预算边界验收',max_calls:0});await waitTask(page,budget.id,'paused_budget');
+ const usage=await api(page,'/usage_records');expect(usage.every((r:any)=>r.cost_cents===0)).toBeTruthy();
+ await nav(page,'调用与额度');await expect(page.getByText('OAuth / PKCE：未启用',{exact:true})).toBeVisible();
+ await nav(page,'虚拟办公室');
+ const glb=await page.request.get('/assets/headquarters.glb');expect(glb.ok()).toBeTruthy();expect((await glb.body()).subarray(0,4).toString()).toBe('glTF');
+ await expect(page.locator('canvas')).toBeVisible();
+ await expect(page.locator('.office-label').filter({hasText:'Atlas'})).toBeVisible({timeout:30000});
+ await page.screenshot({path:path.join(evidence,'desktop-office.png'),fullPage:true});
+ expect(await page.locator('canvas').evaluate((c:HTMLCanvasElement)=>!!c.getContext('webgl2'))).toBeTruthy();
+ const taskBefore=await api(page,'/tasks/'+root.id+'/detail');const agents=await api(page,'/agents');await api(page,'/office/animations/'+agents[0].id,'POST',{state:'coffee'});expect((await api(page,'/tasks/'+root.id+'/detail')).status).toBe(taskBefore.status);
+ await nav(page,'经营驾驶舱');await nav(page,'虚拟办公室');await expect(page.locator('canvas')).toBeVisible();await nav(page,'经营驾驶舱');
+ await page.setViewportSize({width:820,height:1180});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+ await page.setViewportSize({width:390,height:844});await nav(page,'任务中心');
+ await expect(page.getByRole('heading',{name:'任务中心',exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+ await page.screenshot({path:path.join(evidence,'mobile-tasks.png'),fullPage:true});
+ await nav(page,'经营驾驶舱');await page.screenshot({path:path.join(evidence,'mobile-dashboard.png'),fullPage:true});
+ await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'切换主题'}).click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
+ await page.screenshot({path:path.join(evidence,'desktop-dark.png'),fullPage:true});
+ expect(errors).toEqual([]);
+ const oldTask=root.id;await api(page,'/organizations','POST',{name:'隔离工作空间'});expect(await api(page,'/tasks')).toHaveLength(0);expect((await page.request.get('/api/tasks/'+oldTask+'/detail')).status()).toBe(404);
+ fs.writeFileSync(path.join(evidence,'acceptance-summary.json'),JSON.stringify({database:'postgresql',runtime:'separate worker process',agents:3,artifact_formats:8,versions:2,workflow:'passed',webgl:'rendered',viewports:[{width:1440,height:1000},{width:390,height:844}],paid_calls:0,page_errors:errors,completed_at:new Date().toISOString()},null,2));
+});
