@@ -1,25 +1,34 @@
 # AI Universe · 个人 AI 公司
 
-一个可本地运行、使用 PostgreSQL 持久化和独立工作进程的个人公司管理系统。已实现公司/部门/员工、任务编排、审批、文件版本、四级记忆、调用记录、预算边界与可交互 GLB 办公楼层。
+一个可本地运行、带独立工作进程的个人公司管理系统，支持 SQLite 个人本地版和 PostgreSQL 标准部署。已实现公司/部门/员工、任务编排、审批、文件版本、四级记忆、调用记录、预算边界与可交互 GLB 办公楼层。
 
 **当前是可运行的基础版本，尚不满足任务书的完整旗舰版验收。** 尚无真实模型授权或自主 AI 推理；指定官方文档被当前云网络阻断，未能确认最新 Sign in with ChatGPT 集成条件。写实员工与完整生活动画尚未制作。具体见 [验收清单](docs/ACCEPTANCE.md) 与 [模型授权记录](docs/MODEL_AUTHORIZATION.md)。本地模式是明确标注的确定性文件工具，不伪装为模型生成。
 
 ## 本机启动
 
-### Mac 简易启动（只安装 Docker Desktop）
+### 推荐：免 Docker 个人本地版（macOS13.5+）
 
-1. 安装并打开 [Docker Desktop](https://www.docker.com/products/docker-desktop/)，等待引擎显示已运行。
-2. 下载最新源码 ZIP 并解压。在文件夹中打开 `启动 AI Universe.command`。
-3. 首次会下载免费开源组件并构建软件，可能需要几分钟。看到“AI Universe 已就绪”后会自动打开浏览器。
-
-Python、Node.js、PostgreSQL、Redis 和后台工作进程均由容器提供，Mac 不需要单独安装 Python 或 Node.js。安装所缺软件、构建和启动失败都会显示具体提示，不会再静默退出。Mac 系统安全拦截时检查文件来源，不需要关闭系统安全保护；也可从终端用 Bash 运行文件：
+支持 Intel Mac（含 macOS13.7.8）和 Apple Silicon。无需预装 Python、Node.js、Docker、PostgreSQL 或 Redis。下载最新源码并解压，在项目目录执行：
 
 ```sh
-cd "$HOME/Desktop/AI-Universe-main"
-bash "启动 AI Universe.command"
+bash scripts/start-local.sh
 ```
 
-停止容器版：`bash scripts/stop-docker.sh`。再次启动运行同一个 `.command` 即可。关闭终端不会删除数据。容器版数据存放在 Compose 项目的 `postgres_data`、`redis_data`、`artifacts_data` 命名卷；不要删除这些卷。默认只公开本机 3000 端口，数据库/API 不向宿主机公开。已有 `.env` 会保留。容器版使用独立 Compose 项目 `ai-universe-desktop`，开发模式的数据库和成果不受影响；两种方式的数据不会自动迁移，请选择一种日常使用，不要同时占用同一网页端口。
+例如下载 main 分支 ZIP 并解压到桌面后：
+
+```sh
+cd "$HOME/Desktop/AI-Universe-main" && bash scripts/start-local.sh
+```
+
+首次自动准备并验证便携 Python3.12.16 / Node24.22.2、安装锁定依赖、构建界面、初始化本机 SQLite，并启动 API、工作进程和网页。看到“AI Universe 已就绪”后自动打开浏览器。保持终端开启；按 Ctrl+C 停止。以后执行同一命令会复用已验证运行时和有效构建。
+
+`启动 AI Universe.command` 也使用免 Docker 模式；如果 Mac 拒绝直接双击，使用上面的 Bash 命令，不需要关闭系统安全保护。首次安装需要访问 GitHub、nodejs.org、PyPI 和 npm；不会安装 Homebrew，不需要管理员权限，不购买服务。
+
+数据、运行时和日志位于 `~/Library/Application Support/AI Universe/local/`，不会随源码重新下载而重置。停止后备份整个 `data` 目录，包含 SQLite、相关 WAL 文件和 artifacts。此模式不读取/覆盖项目 .env，也不迁移或覆盖原有 PostgreSQL 数据。详情见 [本地运行时说明](docs/LOCAL_RUNTIME.md)。
+
+### 可选：Docker Desktop 全栈
+
+仅在电脑支持且已运行 Docker Desktop 时，用 `bash scripts/start-docker.sh` 启动，`bash scripts/stop-docker.sh` 停止。独立项目 ai-universe-desktop 包含 PostgreSQL/Redis/API/worker/网页，数据保存在对应命名卷。两种模式的数据不自动迁移；不要同时占用同一网页端口。
 
 ### 本机开发模式（已有 Python 和 Node.js 时）
 
@@ -81,6 +90,7 @@ E2E 会创建唯一的临时 PostgreSQL 数据库，启动三个真实进程，�
 - [使用说明](docs/USER_GUIDE.md)
 - [功能验收清单](docs/ACCEPTANCE.md)
 - [测试报告](docs/TEST_REPORT.md)
+- [本地运行时说明](docs/LOCAL_RUNTIME.md)
 - [模型授权核验](docs/MODEL_AUTHORIZATION.md)
 - [架构与当前限制](docs/ARCHITECTURE.md)
 - [3D 资产授权](docs/ASSET_LICENSES.md)
@@ -88,4 +98,4 @@ E2E 会创建唯一的临时 PostgreSQL 数据库，启动三个真实进程，�
 - `scripts/setup.sh` / `scripts/start.sh`：安装与统一启动
 - `frontend/public/assets/` / `assets/`：GLB 与 Blender 源文件
 
-数据：开发模式使用 PostgreSQL/Redis 命名卷与 `.data/artifacts`；容器版使用 PostgreSQL/Redis/成果三个命名卷。备份需要同时保存 `.env`、数据库和相应成果存储，不能只复制前端目录。
+数据：免 Docker 本地版使用用户目录下的 SQLite 和成果目录；开发模式使用 PostgreSQL/Redis 命名卷与 `.data/artifacts`；容器版使用 PostgreSQL/Redis/成果三个命名卷。备份需要同时保存 `.env`、数据库和相应成果存储，不能只复制前端目录。

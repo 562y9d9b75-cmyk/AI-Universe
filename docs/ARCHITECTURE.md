@@ -50,3 +50,10 @@
 `compose.desktop.yaml` 使用独立项目 `ai-universe-desktop` 运行全套服务，宿主机只需 Docker/Compose；`docker/api.Dockerfile` 安装锁定 Python 依赖，`docker/web.Dockerfile` 在 Node24 镜像中构建 Next。API 与 worker 以同一非 root UID 共享成果卷；网页以 node 用户运行。只绑定本机网页端口，数据库与 API 没有宿主机端口。宿主机开发模式的数据不自动迁移到容器版，两个项目分别保留自己的命名卷。
 
 镜像构建可选挂载 `proxy_ca` BuildKit secret，以支持受管环境中的可信代理；不携带会话 CA 到镜像层，也不关闭 TLS 校验。普通 Mac Docker Desktop 无需提供这个构建 secret。`.dockerignore` 排除 .env、私有数据、依赖和日志。
+
+
+## 免 Docker 个人模式
+
+入口 scripts/start-local.sh。固定 SHA256 的便携 Python/Node 安装到用户数据目录，再准备私有 venv 和可复用的前端构建；不覆盖项目 .env 或其他部署数据。SQLite 使用 WAL、外键校验、30秒忙等待；事务用 BEGIN IMMEDIATE 在读取调度/控制状态前取得写入资格，替代 SQLite 不支持的 FOR UPDATE。系统 flock 限制每个 SQLite 数据库只有一个 worker；多个工具任务仍在独立子进程执行。Redis URL 为空时关闭 Redis 通知，页面仍轮询业务事实。PostgreSQL 路径保持原有行锁行为。
+
+单独 Python 监督器管理自己启动的 API、worker、Next 子进程组，提供互斥启动、端口检查、数据库健康检查、失败日志和安全停止。数据保存在用户固定目录，源码更新不重置账户或成果。SQLite 个人模式不是原 PostgreSQL 架构的完整验收替代；完整部署仍可选 Docker/原生服务。真实模型与写实人物的未完成状态不变。

@@ -1,0 +1,6 @@
+PASS: Intel Mac selects pinned Intel archives
+PASS: Apple Silicon selects separate ARM archives
+PASS: verified cache reuses exact checksum without network
+PASS: checksum mismatch stops and preserves existing file
+PASS: atomic extraction and repeated preparation work with spaces
+All 5 local bootstrap checks passed on Bash 3.2.57(1)-release

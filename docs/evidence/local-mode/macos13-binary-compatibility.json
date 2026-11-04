@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "method": "Mach-O inspection, not Mac execution",
+  "binaries": [
+    {
+      "archive": "cpython-3.12.16+20261026-x86_64-apple-darwin-install_only_stripped.tar.gz",
+      "file": "python/bin/python3.12",
+      "architecture": "x86_64",
+      "minimum_macos": "10.15.0",
+      "compatible_with_reported_macos": "13.7.8"
+    },
+    {
+      "archive": "cpython-3.12.16+20261026-x86_64-apple-darwin-install_only_stripped.tar.gz",
+      "file": "python/lib/libpython3.12.dylib",
+      "architecture": "x86_64",
+      "minimum_macos": "10.15.0",
+      "compatible_with_reported_macos": "13.7.8"
+    },
+    {
+      "archive": "node-v24.22.2-darwin-x64.tar.gz",
+      "file": "node-v24.22.2-darwin-x64/bin/node",
+      "architecture": "x86_64",
+      "minimum_macos": "13.5.0",
+      "compatible_with_reported_macos": "13.7.8"
+    }
+  ]
+}

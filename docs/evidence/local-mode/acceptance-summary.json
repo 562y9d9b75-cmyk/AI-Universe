@@ -1,0 +1,22 @@
+{
+  "database": "sqlite",
+  "runtime": "separate worker process",
+  "agents": 3,
+  "artifact_formats": 8,
+  "versions": 2,
+  "workflow": "passed",
+  "webgl": "rendered",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "paid_calls": 0,
+  "page_errors": [],
+  "completed_at": "2026-11-04T03:47:17.116Z"
+}
