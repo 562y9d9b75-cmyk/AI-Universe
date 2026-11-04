@@ -14,15 +14,18 @@ certifi==2026.10.23
     #   httpcore
     #   httpx
 cffi==2.1.1
-    # via cryptography
+    # via
+    #   cryptography
 charset-normalizer==3.5.2
     # via
     #   reportlab
 click==8.5.0
     # via
     #   uvicorn
-cryptography==50.0.2
-    # via pyjwt
+cryptography==48.0.1
+    # via
+    #   -r backend/requirements.in
+    #   pyjwt
 et-xmlfile==2.0.0
     # via
     #   openpyxl
@@ -73,7 +76,8 @@ psycopg-binary==3.3.7
     # via
     #   psycopg
 pycparser==3.12
-    # via cffi
+    # via
+    #   cffi
 pydantic==2.14.2
     # via
     #   fastapi
@@ -84,7 +88,8 @@ pygments==2.21.0
     # via
     #   pytest
 pyjwt==2.15.1
-    # via -r backend/requirements.in
+    # via
+    #   -r backend/requirements.in
 pytest==9.2.0
     # via
     #   -r backend/requirements.in

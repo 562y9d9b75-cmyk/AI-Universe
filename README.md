@@ -2,7 +2,9 @@
 
 一个可本地运行、带独立工作进程的个人公司管理系统，支持 SQLite 个人本地版和 PostgreSQL 标准部署。已实现公司/部门/员工、任务编排、审批、文件版本、四级记忆、调用记录、预算边界与可交互 GLB 办公楼层。
 
-**当前是可运行的基础版本，尚不满足任务书的完整旗舰版验收。** 尚无真实模型授权或自主 AI 推理；指定官方文档被当前云网络阻断，未能确认最新 Sign in with ChatGPT 集成条件。写实员工与完整生活动画尚未制作。具体见 [验收清单](docs/ACCEPTANCE.md) 与 [模型授权记录](docs/MODEL_AUTHORIZATION.md)。本地模式是明确标注的确定性文件工具，不伪装为模型生成。
+当前已加入：8 位中文员工及独立写实虚拟头像、可编辑姓名与人物档案、英国/法国可选形象、新版总部楼层，以及官方 Sign in with ChatGPT 模型适配和模型驱动的多员工任务规划。
+
+**本人 ChatGPT 授权与真实推理仍需在本机完成验证；完整写实 3D 人物与生活动画尚未交付。** 官方开源/个人本地集成条件已核实，软件不读取 Cookie、独立 API key 或 Codex 凭据，不购买额度、不回退付费 API。具体见 [验收清单](docs/ACCEPTANCE.md) 和 [模型授权说明](docs/MODEL_AUTHORIZATION.md)。本地规则模式无需模型，能够整理材料、统计数据和生成文件。
 
 ## 本机启动
 
@@ -58,7 +60,7 @@ bash scripts/start.sh
 # 终端一：加载本地配置，启动 API
 set -a; source .env; set +a
 cd backend
-../.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+../.venv/bin/uvicorn app.main:app --no-access-log --host 127.0.0.1 --port 8000 --reload
 
 # 终端二：同样加载 .env 后
 cd backend
@@ -78,7 +80,10 @@ npm run dev
 .venv/bin/python -m pytest backend/tests -q
 npm --prefix frontend run typecheck
 
-# 真实 PostgreSQL + worker + Next + Chromium 端到端
+# 便携运行时 + SQLite + worker + Next + Chromium 完整安装与端到端
+.venv/bin/python scripts/test_local_e2e.py
+
+# 可选：真实 PostgreSQL + worker + Next + Chromium 端到端
 # 先停止 start.sh；需要系统 Chromium 或设置 AIU_CHROMIUM 的浏览器路径
 .venv/bin/python scripts/test_e2e.py
 ```

@@ -1,0 +1,7 @@
+{
+  "platform": "macosx_13_0_x86_64",
+  "python": "3.12 / cp312",
+  "all_requirements_only_binary_resolved": true,
+  "cryptography_wheel": "cryptography-48.0.1-cp311-abi3-macosx_10_9_universal2.whl",
+  "physical_mac_tested": false
+}

@@ -47,7 +47,7 @@ test(`真实 ${process.env.AIU_E2E_DATABASE||'postgresql'} + 工作进程 + 浏�
  const recruit=page.locator('.agent-card').filter({has:page.getByRole('heading',{name:'Iris'})});
  await recruit.getByRole('button',{name:'编辑配置',exact:true}).click();
  await page.getByLabel('员工姓名',{exact:true}).fill('赵清禾');
- await page.getByLabel('形象背景',{exact:true}).selectOption('GB');
+ await page.getByLabel('形象背景').selectOption('GB');
  await page.getByRole('button',{name:'保存配置'}).click();
  await expect(page.getByRole('dialog')).toHaveCount(0);
  const hired=(await api(page,'/agents')).find((a:any)=>a.name==='赵清禾');

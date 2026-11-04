@@ -9,3 +9,6 @@ node_modules/
 *.tsbuildinfo
 playwright-report/
 test-results/
+
+# Blender automatic local save backups
+*.blend1

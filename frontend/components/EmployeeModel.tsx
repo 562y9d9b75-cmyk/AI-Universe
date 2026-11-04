@@ -10,12 +10,12 @@ export const LIFE_STATES=['idle','typing','coffee','walking','reading','meeting'
 /** Local, explicitly licensed assets only. A portrait ID survives an employee rename. */
 export function validateEmployeeAssets(input:unknown):EmployeeAsset[]{
  if(!Array.isArray(input))return [];
- const used=new Set<string>();
+ const used=new Set<string>();const uris=new Set<string>();
  return input.flatMap((value)=>{
   if(!value||typeof value!=='object')return [];
   const a=value as Partial<EmployeeAsset>;const id=a.id||a.name;
-  if(typeof id!=='string'||!id||typeof a.license!=='string'||!a.license.trim()||typeof a.uri!=='string'||!/^\/assets\/employees\/[a-zA-Z0-9/_-]+\.glb$/.test(a.uri)||used.has(id))return [];
-  used.add(id);
+  if(typeof id!=='string'||!id||typeof a.license!=='string'||!a.license.trim()||typeof a.uri!=='string'||!/^\/assets\/employees\/[a-zA-Z0-9/_-]+\.glb$/.test(a.uri)||used.has(id)||uris.has(a.uri))return [];
+  used.add(id);uris.add(a.uri);
   const clips=Object.fromEntries(Object.entries(a.clips||{}).filter(([key,value])=>LIFE_STATES.includes(key as typeof LIFE_STATES[number])&&typeof value==='string'));
   return [{id,name:a.name,uri:a.uri,license:a.license,height:typeof a.height==='number'&&a.height>=1.2&&a.height<=2.3?a.height:1.72,clips}];
  });

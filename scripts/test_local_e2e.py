@@ -5,10 +5,11 @@ import httpx
 ROOT=Path(__file__).resolve().parents[1]
 source=Path(tempfile.mkdtemp(prefix='aiu-native-source-'))
 home=Path(os.getenv('AIU_TEST_LOCAL_HOME',tempfile.mkdtemp(prefix='aiu-native home-')))
+evidence=Path(os.getenv('AIU_E2E_EVIDENCE_DIR',str(ROOT/'docs/evidence/local-mode'))).resolve()
 for directory in ['backend','frontend','scripts']:
     shutil.copytree(ROOT/directory,source/directory,ignore=shutil.ignore_patterns('node_modules','.next','__pycache__','.pytest_cache','test-results','*.tsbuildinfo'))
 (source/'.run').mkdir()
-env=os.environ.copy();env.update(AIU_LOCAL_HOME=str(home),AIU_PORT='8012',AIU_WEB_PORT='3012',AIU_E2E_DATABASE='sqlite',AIU_E2E_BASE_URL='http://localhost:3012',AIU_E2E_REPORT=str(ROOT/'docs/evidence/local-mode/playwright-results.json'),AIU_E2E_EVIDENCE_DIR=str(ROOT/'docs/evidence/local-mode'),AIU_E2E_PASSWORD=secrets.token_urlsafe(32))
+env=os.environ.copy();env.update(AIU_LOCAL_HOME=str(home),AIU_PORT='8012',AIU_WEB_PORT='3012',AIU_E2E_DATABASE='sqlite',AIU_E2E_BASE_URL='http://localhost:3012',AIU_E2E_REPORT=str(evidence/'playwright-results.json'),AIU_E2E_EVIDENCE_DIR=str(evidence),AIU_E2E_PASSWORD=secrets.token_urlsafe(32))
 processes=[];handles=[]
 def launch(name):
     log=(source/'.run'/(name+'.log')).open('w');handles.append(log)
@@ -53,8 +54,10 @@ try:
             time.sleep(.1)
         else:raise RuntimeError('SQLite recovery failed: '+detail.get('error','unknown'))
         assert detail['attempts']>=2 and any(r['status']=='interrupted' for r in detail['runs']) and len(detail['artifacts'])==5
-    evidence=ROOT/'docs/evidence/local-mode';evidence.mkdir(parents=True,exist_ok=True)
-    (evidence/'portable-launcher.json').write_text(json.dumps({'status':'passed','runtimes':'verified portable CPython3.12.16 and Node24.22.2','database':'sqlite','postgresql_redis_docker_required':False,'path_contains_spaces':True,'browser_workflow':'passed','worker_crash_recovery':'passed','attempts':detail['attempts'],'run_states':[r['status'] for r in detail['runs']],'artifacts':len(detail['artifacts']),'physical_mac_tested':False},indent=2))
+    for log in (home/'run').glob('*.log'):
+        assert 'private-e2e-sentinel' not in log.read_text(errors='replace'),'OAuth callback query was logged'
+    evidence.mkdir(parents=True,exist_ok=True)
+    (evidence/'portable-launcher.json').write_text(json.dumps({'status':'passed','runtimes':'verified portable CPython3.12.16 and Node24.22.2','database':'sqlite','postgresql_redis_docker_required':False,'path_contains_spaces':True,'browser_workflow':'passed','worker_crash_recovery':'passed','oauth_callback_query_not_logged':True,'attempts':detail['attempts'],'run_states':[r['status'] for r in detail['runs']],'artifacts':len(detail['artifacts']),'physical_mac_tested':False},indent=2))
     print('Portable installer / SQLite browser E2E / actual worker crash + full restart recovery: passed',flush=True)
 finally:
     for p in processes:

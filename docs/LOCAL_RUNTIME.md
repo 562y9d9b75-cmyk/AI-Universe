@@ -14,4 +14,4 @@
 
 Node Intel 二进制最低 macOS13.5；便携 Python 最低 macOS10.15（由实际 Mach-O 标记核对）。Next SWC、Tailwind oxide、LightningCSS、Sharp 原生模块也按 package-lock 的 SHA512 与 Mach-O 标记核对。证据位于 docs/evidence/local-mode。静态兼容检查不等于在用户 Mac 实机执行；完整运行在独立 Linux 环境测试，实机需用户最后确认。
 
-运行时由上游提供，保留其发行文件与许可证；下载的运行时、依赖、数据库和用户凭据不提交到 GitHub。本模式不启用付费模型；真实 ChatGPT 授权、AI 自主规划、写实人物和完整生活动画仍未完成。
+运行时由上游提供，保留其发行文件与许可证；下载的运行时、依赖、数据库和用户凭据不提交到 GitHub。本模式不启用独立付费 API。官方 ChatGPT 授权适配与 AI 自主规划路径已实现，需本人在本机授权并补验真实任务；二维写实头像已交付，三维人物和完整生活动画仍未完成。

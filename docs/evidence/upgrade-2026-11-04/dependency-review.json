@@ -1,0 +1,47 @@
+{
+  "frontend_production_advisories": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "backend_raw_findings": 6,
+  "backend_unique_advisories": [
+    {
+      "id": "PYSEC-2026-3554",
+      "fixed_versions": [
+        "49.0.0"
+      ],
+      "aliases": [
+        "CVE-2026-69248",
+        "GHSA-m2h6-j472-rp4c"
+      ]
+    },
+    {
+      "id": "PYSEC-2026-3552",
+      "fixed_versions": [
+        "50.0.0"
+      ],
+      "aliases": [
+        "GHSA-g6cj-pr64-35w5",
+        "CVE-2026-69247"
+      ]
+    },
+    {
+      "id": "PYSEC-2026-3553",
+      "fixed_versions": [
+        "49.0.0"
+      ],
+      "aliases": [
+        "GHSA-jwv3-5hgf-82ww",
+        "CVE-2026-69249"
+      ]
+    }
+  ],
+  "affected_package": "cryptography==48.0.1",
+  "compatibility_reason": "Latest upstream macOS13 Intel binary wheel; 49/50 fixes lack compatible wheels.",
+  "reachability_review": "The app calls PyJWT RS256/ES256 signature verification with public JWKS. It does not call cryptography X.509 verification or PKCS7 decryption, the APIs affected by these advisories. HTTPS uses CPython ssl through httpx. This is a bounded reachability review, not a complete security audit.",
+  "paid_model_requests": 0
+}

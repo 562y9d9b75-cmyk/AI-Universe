@@ -320,3 +320,30 @@ def test_disconnected_token_is_not_admitted_to_new_requests(authority):
     token, _ = auth._access_token('org-a')
     auth.disconnect('org-a')
     with pytest.raises(auth.AuthorizationRequired):auth._assert_current_token('org-a', token)
+
+
+def test_reauthorization_without_plan_removes_old_tokens_and_proof(authority):
+    connect(authority)
+    auth.list_models('org-a')
+    auth.execute_response('org-a',instructions='岗位职责',input_text='测试材料')
+    assert auth.connection_status('org-a')['inference_verified']
+    authority['settings']['identity_only']=True
+    state=connect(authority)
+    assert state['identity_connected'] and not state['plan_usage_approved']
+    assert not state['inference_verified']
+    stored=auth._active(auth._load('organization:org-a'))
+    assert 'access_token' not in stored and 'refresh_token' not in stored
+    with pytest.raises(auth.AuthorizationRequired):
+        auth.execute_response('org-a',instructions='岗位职责',input_text='不可调用')
+
+
+def test_server_revocation_blocks_later_requests_until_reauthorization(authority):
+    connect(authority);auth.list_models('org-a')
+    authority['settings'].update(response_status=401,response_error='invalid_token')
+    with pytest.raises(auth.AuthorizationRequired):
+        auth.execute_response('org-a',instructions='岗位',input_text='材料')
+    assert not auth.connection_status('org-a')['identity_connected']
+    count=len(authority['calls'])
+    with pytest.raises(auth.AuthorizationRequired):
+        auth.execute_response('org-a',instructions='岗位',input_text='材料')
+    assert len(authority['calls'])==count

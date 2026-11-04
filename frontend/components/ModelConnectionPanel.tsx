@@ -28,7 +28,7 @@ export default function ModelConnectionPanel({status,api,onRefresh,onError}:{sta
   }catch(e){popup?.close();onError((e as Error).message)}finally{setAction('')}
  }
  async function selectModel(slug:string){setAction('select');onError('');try{await api('/model/chatgpt/select','POST',{model:slug});setSelectedModel(slug);await onRefresh()}catch(e){onError((e as Error).message)}finally{setAction('')}}
- async function disconnect(){setAction('disconnect');onError('');try{await api('/model/chatgpt/disconnect','POST');setConfirmDisconnect(false);setAuthorizationUrl('');setConsent(false);setModels([]);await onRefresh()}catch(e){onError((e as Error).message)}finally{setAction('')}}
+ async function disconnect(){setAction('disconnect');onError('');try{const result=await api('/model/chatgpt/disconnect','POST');if(result.remote_revocation_confirmed===false)onError(result.message||'本地已退出，请到 ChatGPT 设置确认远程连接已撤销。');setConfirmDisconnect(false);setAuthorizationUrl('');setConsent(false);setModels([]);await onRefresh()}catch(e){onError((e as Error).message)}finally{setAction('')}}
  const busy=!!action;
  return <section className="panel model-panel connection-panel">
   <div className="section-heading"><div><h2>ChatGPT 计划接入</h2><p>通过官方授权流程连接你自己的账户</p></div><span className={'connection-state '+(usageApproved?'approved':identityConnected?'identity':'pending')}><i/>{usageApproved?(inferenceVerified?'已完成真实推理':'计划已授权 · 推理待验证'):identityConnected?'身份已连接 · 计划待批准':'尚未完成授权'}</span></div>

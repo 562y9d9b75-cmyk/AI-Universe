@@ -224,10 +224,10 @@ def _error(response: httpx.Response):
                         'refresh_token_expired', 'refresh_token_invalidated', 'refresh_token_reused'}
     if code in terminal_refresh:
         raise AuthorizationRequired('ChatGPT 授权已失效，请重新连接。[' + code + ']')
+    if response.status_code == 401:
+        raise AuthorizationRequired('ChatGPT 授权未被接受，请重新连接并检查计划用量权限。')
     if code == 'subscription_sharing_user_not_eligible':
-        message = '当前 ChatGPT 账户、工作空间或政策不支持计划用量，请检查官方资格限制'
-    elif response.status_code == 401:
-        message = 'ChatGPT 授权未被接受，请检查所选账户和计划用量权限'
+        raise AuthorizationRequired('当前 ChatGPT 账户、工作空间或政策不支持计划用量，请检查官方资格限制')
     elif response.status_code == 403:
         message = 'OpenAI 拒绝此次请求，请检查计划权限、地区或工作空间限制'
     elif response.status_code >= 500:
@@ -464,6 +464,15 @@ def _assert_current_token(organization_id: str, token: str):
             raise AuthorizationRequired('ChatGPT 连接已退出或已切换，本次请求已停止')
 
 
+def _discard_rejected_token(organization_id: str, token: str):
+    key = _organization_key(organization_id)
+    with _lock(key):
+        store = _load(key)
+        if _active(store).get('access_token') == token:
+            _clear_tokens(_active(store))
+            _save(key, store)
+
+
 def list_models(organization_id: str) -> list[dict]:
     token, selected = _access_token(organization_id)
     try:
@@ -473,6 +482,8 @@ def list_models(organization_id: str) -> list[dict]:
     except httpx.HTTPError as exc:
         raise ModelConnectionError('无法读取当前 ChatGPT 账户的模型列表，请稍后重试') from exc
     if response.status_code != 200:
+        if response.status_code == 401:
+            _discard_rejected_token(organization_id, token)
         _error(response)
     try:
         catalog = response.json()['models']
@@ -575,6 +586,8 @@ def execute_response(organization_id: str, *, instructions: str, input_text: str
                 request_id = re.sub(r'[^A-Za-z0-9_.-]', '', response.headers.get('x-request-id', ''))[:160]
                 if response.status_code != 200:
                     response.read()
+                    if response.status_code == 401:
+                        _discard_rejected_token(organization_id, token)
                     _error(response)
                 data_lines = []
                 for line in response.iter_lines():

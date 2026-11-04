@@ -10,3 +10,6 @@ reportlab>=4.2,<5
 httpx>=0.28,<1
 pytest>=8,<10
 pyjwt[crypto]>=2.10,<3
+
+# cryptography 49+ requires newer macOS wheels; retain Intel macOS 13 support.
+cryptography>=48.0.1,<49
