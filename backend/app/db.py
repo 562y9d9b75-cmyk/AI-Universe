@@ -153,6 +153,8 @@ class UsageRecord(Record):
     units:Mapped[int]=mapped_column(Integer,default=1)
     cost_cents:Mapped[int]=mapped_column(Integer,default=0)
     status:Mapped[str]=mapped_column(String(30))
+    # Provider-reported response/model/token counters; never auth credentials.
+    metrics:Mapped[dict]=mapped_column(JSON,default=dict)
 class AuditLog(Record):
     __tablename__='audit_logs'
     action:Mapped[str]=mapped_column(String(100))

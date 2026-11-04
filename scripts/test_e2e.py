@@ -25,7 +25,7 @@ def start(args,cwd,name):
  p=subprocess.Popen(args,cwd=cwd,env=env,stdout=h,stderr=subprocess.STDOUT,start_new_session=True);processes.append(p);return p
 try:
  py=str(ROOT/'.venv/bin/python')
- start([py,'-m','uvicorn','app.main:app','--host','127.0.0.1','--port','8000'],ROOT/'backend','api')
+ start([py,'-m','uvicorn','app.main:app','--no-access-log','--host','127.0.0.1','--port','8000'],ROOT/'backend','api')
  worker=start([py,'-m','app.runtime'],ROOT/'backend','worker')
  start(['node','node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3000'],ROOT/'frontend','web')
  with httpx.Client(trust_env=False) as c:

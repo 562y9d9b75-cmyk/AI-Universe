@@ -30,7 +30,7 @@ def main():
             if p.exists():print(f'\n{name} 最近日志：\n'+'\n'.join(p.read_text(errors='replace').splitlines()[-20:]),flush=True)
     try:
         subprocess.run([sys.executable,'-m','app.migrate'],cwd=ROOT/'backend',env=env,check=True)
-        start([sys.executable,'-m','uvicorn','app.main:app','--host','127.0.0.1','--port',str(api_port)],ROOT/'backend','api')
+        start([sys.executable,'-m','uvicorn','app.main:app','--no-access-log','--host','127.0.0.1','--port',str(api_port)],ROOT/'backend','api')
         start([sys.executable,'-m','app.runtime'],ROOT/'backend','worker')
         start([str(Path(env['AIU_NODE_HOME'])/'bin/node'),'node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port',str(web_port)],ROOT/'frontend','web')
         opener=urllib.request.build_opener(urllib.request.ProxyHandler({}));ready=False;deadline=time.monotonic()+90

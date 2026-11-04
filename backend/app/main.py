@@ -15,6 +15,7 @@ from .seed import seed
 from .providers import connection_status
 from .files import MIME
 from .runtime import dependencies
+from .appearance import appearance_catalog,normalize_appearance,default_appearance,DEFAULT_EMPLOYEES
 
 @asynccontextmanager
 async def lifespan(app):migrate();yield
@@ -81,7 +82,9 @@ def logout(auth:Auth):
 @app.get('/api/me')
 def me(auth:Auth):return auth
 @app.get('/api/model/status')
-def model_status(auth:Auth):return connection_status()
+def model_status(auth:Auth):return connection_status(auth['organization_id'])
+@app.get('/api/appearance/catalog')
+def get_appearance_catalog(auth:Auth):return appearance_catalog()
 @app.get('/api/organizations')
 def orgs(auth:Auth):
     # Personal installation has one owner and no public signup.
@@ -142,6 +145,7 @@ def create_task(data:TaskInput,auth:Auth):
         fields={'organization_id':org,**data.model_dump(exclude={'mode','dependencies'})}
         if not fields['agent_id']:fields['agent_id']=s.scalar(select(Agent.id).where(Agent.organization_id==org).order_by(Agent.created_at))
         # Autonomous local mode is a disclosed deterministic 3-person DAG, not model planning.
+        if data.mode=='autonomous' and data.provider=='chatgpt_plan':fields['operation']='plan'
         if data.mode=='autonomous' and data.provider=='local':
             agents=list(s.scalars(select(Agent).where(Agent.organization_id==org).order_by(Agent.created_at)))
             if len(agents)<3:raise HTTPException(422,'协作需要至少三名员工')
@@ -185,7 +189,7 @@ def task_action(id:str,action:str,auth:Auth):
             children=list(s.scalars(select(Task).where(Task.parent_id==t.id).with_for_update()))
             for child in children:
                 if action in ['resume','retry']:
-                    if child.status in ['paused','cancelled'] :child.status='queued';child.error=''
+                    if child.status in ['paused','cancelled','paused_budget','paused_quota','blocked_auth','failed'] :child.status='queued';child.error=''
                 elif child.status not in ['completed','cancelled']:
                     child.status='paused' if action=='pause' else 'cancelled'
                     if child.active_run_id:
@@ -210,17 +214,21 @@ def review(id:str,data:ReviewInput,auth:Auth):
         t.status='completed' if data.decision=='approve' else 'queued';audit(s,t.organization_id,'review.'+a.status,t.id,data.feedback)
         return serialize(t)
 
-WRITABLE={'departments':{'name','description'},'agents':{'name','role','department_id','manager_id','responsibilities','goals','skills','permissions'},'projects':{'name','description'},'memories':{'scope','scope_id','content','source','confidence','verified'},'knowledge_items':{'title','content','source'}}
+WRITABLE={'departments':{'name','description'},'agents':{'name','role','department_id','manager_id','responsibilities','goals','skills','permissions','appearance'},'projects':{'name','description'},'memories':{'scope','scope_id','content','source','confidence','verified'},'knowledge_items':{'title','content','source'}}
 def validate_fields(s,resource,data,org,id=None):
     if not isinstance(data,dict) or not data or set(data)-WRITABLE[resource]:raise HTTPException(422,'字段不被允许')
     for k,v in data.items():
         if isinstance(v,str) and len(v)>20000:raise HTTPException(422,'字段过长')
     if resource in ['departments','agents','projects']:
         for k in ['name','role'] if resource=='agents' else ['name']:
-            if k in data and (not isinstance(data[k],str) or not 1<=len(data[k].strip())<=200):raise HTTPException(422,'名称和岗位不能为空且最多200字')
+            max_length=100 if resource=='agents' and k=='name' else 200
+            if k in data and (not isinstance(data[k],str) or not 1<=len(data[k].strip())<=max_length):raise HTTPException(422,'名称或岗位为空、过长')
             if not id and k not in data:raise HTTPException(422,'缺少必填字段 '+k)
+            if k in data:data[k]=data[k].strip()
         if 'description' in data and not isinstance(data['description'],str):raise HTTPException(422,'说明必须是文本')
     if resource=='agents':
+        for k in ['department_id','manager_id']:
+            if k in data and data[k] is not None and (not isinstance(data[k],str) or not 1<=len(data[k])<=36):raise HTTPException(422,'关联记录ID格式无效')
         reference(s,Department,data.get('department_id'),org);reference(s,Agent,data.get('manager_id'),org)
         manager=data.get('manager_id');seen={id} if id else set()
         while manager:
@@ -231,6 +239,16 @@ def validate_fields(s,resource,data,org,id=None):
         for k in ['skills','permissions']:
             if k in data and (not isinstance(data[k],list) or len(data[k])>100 or any(not isinstance(v,str) or len(v)>100 for v in data[k])):raise HTTPException(422,k+'格式无效')
         if 'permissions' in data and set(data['permissions'])-{'documents','analysis'}:raise HTTPException(422,'工具尚未实现，不能授予此权限')
+        if 'appearance' in data:
+            current=owned(s,Agent,id,org).appearance if id else None
+            try:data['appearance']=normalize_appearance(data['appearance'],current)
+            except (ValidationError,ValueError):raise HTTPException(422,'形象配置无效：请选择匹配地区的本地人物模板，字段须符合形象目录')
+        elif not id:
+            # Prefer an unused Chinese character for new employees; the owner can
+            # explicitly choose either Chinese or foreign portraits in the editor.
+            used={a.appearance.get('portrait_id') for a in s.scalars(select(Agent).where(Agent.organization_id==org)) if isinstance(a.appearance,dict)}
+            portrait_id=next((p['portrait_id'] for p in DEFAULT_EMPLOYEES if p['portrait_id'] not in used),'lin-yuan')
+            data['appearance']=default_appearance(portrait_id)
     if resource=='memories':
         current=serialize(owned(s,Memory,id,org)) if id else {}
         try:m=MemoryInput.model_validate({**{k:v for k,v in current.items() if k in WRITABLE[resource]},**data})
@@ -297,3 +315,7 @@ def animation(agent_id:str,auth:Auth,data:dict=Body(...)):
     with Session.begin() as s:
         owned(s,Agent,agent_id,auth['organization_id'])
         a=s.scalar(select(EmployeeAnimation).where(EmployeeAnimation.agent_id==agent_id));a.state=data['state'];a.changed_at=now();return serialize(a)
+
+# OAuth control routes have their own owner checks; callback uses single-use state.
+from .model_routes import router as model_router
+app.include_router(model_router)

@@ -12,4 +12,4 @@ RUN chmod -R a+rX /app/backend \
     && mkdir /data && chown aiu:aiu /data
 USER aiu
 EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--no-access-log", "--host", "0.0.0.0", "--port", "8000"]

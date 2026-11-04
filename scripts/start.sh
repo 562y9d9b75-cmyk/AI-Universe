@@ -27,7 +27,7 @@ echo $$ > .run/launcher.pid
 children=()
 cleanup(){ trap - EXIT INT TERM; for pid in "${children[@]}"; do kill "$pid" 2>/dev/null || true; done; wait || true; rm -f .run/launcher.pid; }
 trap cleanup EXIT INT TERM
-(cd backend && exec ../.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port "${AIU_PORT:-8000}") >.run/api.log 2>&1 & children+=("$!")
+(cd backend && exec ../.venv/bin/uvicorn app.main:app --no-access-log --host 127.0.0.1 --port "${AIU_PORT:-8000}") >.run/api.log 2>&1 & children+=("$!")
 (cd backend && exec ../.venv/bin/python -m app.runtime) >.run/worker.log 2>&1 & children+=("$!")
 (cd frontend && exec node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port "${AIU_WEB_PORT:-3000}") >.run/web.log 2>&1 & children+=("$!")
 for i in {1..60}; do

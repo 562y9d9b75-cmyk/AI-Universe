@@ -1,9 +1,7 @@
 """Isolated API + real scheduler/files tests, never touching the owner's database."""
 import os,tempfile,time,zipfile
 from pathlib import Path
-TEST_DIR=tempfile.mkdtemp(prefix='aiu-tests-')
-os.environ['AIU_DATABASE_URL']='sqlite:///'+TEST_DIR+'/test.db'
-os.environ['AIU_DATA_DIR']=TEST_DIR
+TEST_DIR=os.environ['AIU_DATA_DIR']
 from fastapi.testclient import TestClient
 from sqlalchemy import select,func
 from app.main import app
@@ -160,3 +158,42 @@ def test_10_sqlite_worker_lock_prevents_duplicate_processes():
     finally:lock.close()
     r=subprocess.run([sys.executable,'-c','from app.runtime import acquire_worker_lock; lock=acquire_worker_lock()'],cwd=ROOT/'backend',capture_output=True,text=True)
     assert r.returncode==0,r.stderr
+
+def test_11_editable_names_portraits_and_appearance_api_boundaries():
+    from app.appearance import DEFAULT_EMPLOYEES
+    from app.main import app
+    from app.migrate import migrate
+    catalog=ok(client.get('/api/appearance/catalog'))
+    assert len(catalog['portraits'])==10
+    assert {p['character_profile']['nationality'] for p in catalog['portraits']}=={'CN','GB','FR'}
+    anon=TestClient(app,headers={'X-AIU-Request':'1'})
+    assert anon.get('/api/appearance/catalog').status_code==401
+    employees=rows('agents')
+    assert {a['name'] for a in employees}=={p['name'] for p in DEFAULT_EMPLOYEES}
+    assert len({a['appearance']['avatar_url'] for a in employees})==8
+    employee=next(a for a in employees if a['role']=='AI CEO')
+    changed=ok(client.patch('/api/agents/'+employee['id'],json={'name':'  自定义老板  '}))
+    assert changed['name']=='自定义老板' and changed['appearance']==employee['appearance']
+    # A second startup must not restore the original name or visual profile.
+    migrate()
+    assert next(a for a in rows('agents') if a['id']==employee['id'])['name']=='自定义老板'
+    foreign=ok(client.patch('/api/agents/'+employee['id'],json={'appearance':{'portrait_id':'olivia-morgan'}}))
+    assert foreign['appearance']['avatar_url']=='/assets/portraits/olivia-morgan.png'
+    assert foreign['appearance']['character_profile']['nationality']=='GB'
+    assert foreign['skills']==employee['skills'] and foreign['permissions']==employee['permissions']
+    partial=ok(client.patch('/api/agents/'+employee['id'],json={'appearance':{'character_profile':{'description':'自主配置的虚拟人物档案'}}}))
+    assert partial['appearance']['portrait_id']=='olivia-morgan'
+    assert partial['appearance']['character_profile']['nationality']=='GB'
+    assert partial['appearance']['index']==employee['appearance']['index']
+    for bad in [{'avatar_url':'https://evil.example/track.png'},
+                {'portrait_id':'olivia-morgan','character_profile':{'nationality':'CN'}},
+                {'character_profile':{'permissions':['shell']}},
+                {'portrait_id':'lin-yuan','avatar_url':'/assets/portraits/olivia-morgan.png'}]:
+        ok(client.patch('/api/agents/'+employee['id'],json={'appearance':bad}),422)
+    assert next(a for a in rows('agents') if a['id']==employee['id'])['appearance']==partial['appearance']
+    ok(client.patch('/api/agents/'+employee['id'],json={'manager_id':{'invalid':'id'}}),422)
+    ok(client.patch('/api/agents/'+employee['id'],json={'name':'名'*101}),422)
+    created=ok(client.post('/api/agents',json={'name':'新同事','role':'研究员'}))
+    assert created['appearance']['character_profile']['nationality']=='CN'
+    explicit=ok(client.post('/api/agents',json={'name':'外籍形象同事','role':'产品顾问','appearance':{'portrait_id':'lucas-martin'}}))
+    assert explicit['appearance']['character_profile']['nationality']=='FR'

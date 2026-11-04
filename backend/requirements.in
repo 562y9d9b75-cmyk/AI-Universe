@@ -9,3 +9,4 @@ python-pptx>=1.0,<2
 reportlab>=4.2,<5
 httpx>=0.28,<1
 pytest>=8,<10
+pyjwt[crypto]>=2.10,<3

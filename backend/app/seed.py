@@ -1,12 +1,13 @@
 from .db import *
-ROSTER=[('Atlas','AI CEO','战略与运营'),('Emma','市场研究员','市场与数据'),('Alex','数据分析师','市场与数据'),('Sophia','产品经理','产品与技术'),('Mike','技术工程师','产品与技术'),('Lily','创意总监','创意与内容'),('David','财务分析师','财务与管理'),('Noah','项目经理','战略与运营')]
+from .appearance import DEFAULT_EMPLOYEES, default_appearance
+ROSTER=[(p['name'],p['role'],p['department']) for p in DEFAULT_EMPLOYEES]
 def seed(s,org):
     deps={}
     for n in dict.fromkeys(x[2] for x in ROSTER):
         d=Department(organization_id=org,name=n,description=n+'部门');s.add(d);s.flush();deps[n]=d.id
     ceo=None
     for i,(n,r,d) in enumerate(ROSTER):
-        a=Agent(organization_id=org,name=n,role=r,department_id=deps[d],manager_id=ceo,responsibilities=r+'岗位：基于证据处理输入，按验收标准提交成果。',goals='准确、可追踪、按预算交付',skills=['文档整理','输入分析'],permissions=['documents','analysis'],appearance={'index':i})
+        a=Agent(organization_id=org,name=n,role=r,department_id=deps[d],manager_id=ceo,responsibilities=r+'岗位：基于证据处理输入，按验收标准提交成果。',goals='准确、可追踪、按预算交付',skills=['文档整理','输入分析'],permissions=['documents','analysis'],appearance=default_appearance(DEFAULT_EMPLOYEES[i]['portrait_id'],i))
         s.add(a);s.flush()
         if i==0:ceo=a.id
         for skill in a.skills:s.add(AgentSkill(organization_id=org,agent_id=a.id,name=skill))

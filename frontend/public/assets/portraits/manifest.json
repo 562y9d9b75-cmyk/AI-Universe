@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "generated_on": "2026-11-04",
+  "generator": "OpenAI image_gen",
+  "provenance": "Independently generated from original text prompts for AI Universe. No reference photos, stock photographs, or third-party portrait assets were supplied.",
+  "fictional_character_notice": "Names, nationality, ages, and roles are fictional configurable character settings, not real-person identification.",
+  "usage_notice": "Delivered with this project under the applicable generation service terms. The Blender asset CC0 dedication does not automatically apply to these generated images. No exclusive copyright or real-person endorsement is claimed.",
+  "asset_type": "2D portrait photographs in visual style; not 3D character meshes, rigs, or animations",
+  "images": [
+    {
+      "id": "lin-yuan",
+      "name": "林远",
+      "file": "lin-yuan.png",
+      "url": "/assets/portraits/lin-yuan.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 42,
+        "role": "AI CEO"
+      },
+      "format": "PNG",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2032598,
+      "sha256": "93cce975b9747840e8c130bcc17487f09becb9aaf86e5092652b224b9e1aed27"
+    },
+    {
+      "id": "shen-zhixia",
+      "name": "沈知夏",
+      "file": "shen-zhixia.png",
+      "url": "/assets/portraits/shen-zhixia.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 29,
+        "role": "市场研究员"
+      },
+      "format": "PNG",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2098725,
+      "sha256": "5acf51b89e8a754602b0171759868faa6a4ad11c2c90cdc30382b0b2001de94c"
+    },
+    {
+      "id": "zhou-yuan",
+      "name": "周予安",
+      "file": "zhou-yuan.png",
+      "url": "/assets/portraits/zhou-yuan.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 32,
+        "role": "数据分析师"
+      },
+      "format": "PNG",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2026660,
+      "sha256": "b45181f1967d7a5b6dd86239a0dc142f42199c545a33ee197d098042e6dd78a6"
+    },
+    {
+      "id": "su-yining",
+      "name": "苏以宁",
+      "file": "su-yining.png",
+      "url": "/assets/portraits/su-yining.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 34,
+        "role": "产品经理"
+      },
+      "format": "PNG",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2382255,
+      "sha256": "7761662968d1978f8bd9e51e02987f11507a0cbe4ecb53eb826e7624207a0fda"
+    },
+    {
+      "id": "chen-yan",
+      "name": "陈砚",
+      "file": "chen-yan.png",
+      "url": "/assets/portraits/chen-yan.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 30,
+        "role": "技术工程师"
+      },
+      "format": "PNG",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2276677,
+      "sha256": "7ba2021fb126446be01b0696ac853d5ed6eb52afb4a036cfdca81d1001c84f63"
+    },
+    {
+      "id": "xu-xinglan",
+      "name": "许星澜",
+      "file": "xu-xinglan.png",
+      "url": "/assets/portraits/xu-xinglan.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 31,
+        "role": "创意总监"
+      },
+      "format": "PNG",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2369949,
+      "sha256": "9b3424f92c5474b802c06b3ab15f7d0ac34c7802ac42fdcaf9a481acd6ead4e9"
+    },
+    {
+      "id": "gu-mingchuan",
+      "name": "顾明川",
+      "file": "gu-mingchuan.png",
+      "url": "/assets/portraits/gu-mingchuan.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 47,
+        "role": "财务分析师"
+      },
+      "format": "PNG",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2240519,
+      "sha256": "f503198519fa366edf6bddc414859daba6339d7272fafc4bc7ee918a15212581"
+    },
+    {
+      "id": "lu-jingxing",
+      "name": "陆景行",
+      "file": "lu-jingxing.png",
+      "url": "/assets/portraits/lu-jingxing.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "CN",
+        "age": 36,
+        "role": "项目经理"
+      },
+      "format": "PNG",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2396666,
+      "sha256": "f970fd8f7d17d16cd05e3ac4759473642c2d3377ddc46e3f0510b6e64e15d066"
+    },
+    {
+      "id": "olivia-morgan",
+      "name": "Olivia Morgan",
+      "file": "olivia-morgan.png",
+      "url": "/assets/portraits/olivia-morgan.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "GB",
+        "age": 33,
+        "role": "专业人士"
+      },
+      "format": "PNG",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2513992,
+      "sha256": "bcac5ca78f875b05fb1e59ff0d00f2a31a4f05f558ae06d8e7c36ca13c12fd63"
+    },
+    {
+      "id": "lucas-martin",
+      "name": "Lucas Martin",
+      "file": "lucas-martin.png",
+      "url": "/assets/portraits/lucas-martin.png",
+      "fictional": true,
+      "role_setting": {
+        "nationality": "FR",
+        "age": 38,
+        "role": "专业人士"
+      },
+      "format": "PNG",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2194911,
+      "sha256": "b1c2340d67577fcb942975fe75c5f20323646828155ae1396df82b6b2b337d18"
+    }
+  ]
+}

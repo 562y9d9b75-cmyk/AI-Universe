@@ -1,9 +1,9 @@
 {
-  "version": 1,
-  "floor": "/assets/headquarters.glb",
+  "version": 2,
+  "floor": "/assets/headquarters-v2.glb",
   "workstation": "/assets/workstation.glb",
   "employees": [],
-  "status": "architectural_floor_only",
+  "status": "detailed_architectural_floor_with_portrait_markers",
   "license": "CC0-1.0",
   "note": "No photoreal human models or motion clips are included. Do not mark character acceptance complete."
 }
