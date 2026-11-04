@@ -148,3 +148,15 @@ def test_09_collaboration_parent_pause_and_resume():
     assert claim() is None
     ok(client.post('/api/tasks/'+root['id']+'/resume'));drive()
     assert ok(client.get('/api/tasks/'+root['id']+'/detail'))['status']=='completed'
+
+def test_10_sqlite_worker_lock_prevents_duplicate_processes():
+    import subprocess,sys
+    from app.db import ROOT
+    from app.runtime import acquire_worker_lock
+    lock=acquire_worker_lock()
+    try:
+        r=subprocess.run([sys.executable,'-c','from app.runtime import acquire_worker_lock; lock=acquire_worker_lock()'],cwd=ROOT/'backend',capture_output=True,text=True)
+        assert r.returncode!=0 and '已有工作进程' in r.stderr
+    finally:lock.close()
+    r=subprocess.run([sys.executable,'-c','from app.runtime import acquire_worker_lock; lock=acquire_worker_lock()'],cwd=ROOT/'backend',capture_output=True,text=True)
+    assert r.returncode==0,r.stderr

@@ -2,14 +2,25 @@
 import os, uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from sqlalchemy import create_engine, String, Text, Integer, Float, JSON, ForeignKey, Index
+from sqlalchemy import create_engine, String, Text, Integer, Float, JSON, ForeignKey, Index, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 ROOT=Path(__file__).resolve().parents[2]
 _data_path=Path(os.getenv('AIU_DATA_DIR', str(ROOT/'.data')))
 DATA=(_data_path if _data_path.is_absolute() else ROOT/_data_path).resolve()
 DATA.mkdir(parents=True,exist_ok=True)
 URL=os.getenv('AIU_DATABASE_URL','sqlite:///'+str(DATA/'local.db'))
-engine=create_engine(URL,pool_pre_ping=True,connect_args={'check_same_thread':False} if URL.startswith('sqlite') else {})
+engine=create_engine(URL,pool_pre_ping=True,connect_args={'check_same_thread':False,'timeout':30} if URL.startswith('sqlite') else {})
+if engine.dialect.name=='sqlite':
+    @event.listens_for(engine,'connect')
+    def configure_sqlite(connection,record):
+        connection.isolation_level=None
+        connection.execute('PRAGMA journal_mode=WAL')
+        connection.execute('PRAGMA foreign_keys=ON')
+        connection.execute('PRAGMA busy_timeout=30000')
+    @event.listens_for(engine,'begin')
+    def serialize_sqlite_transaction(connection):
+        # SQLite lacks FOR UPDATE; reserve the writer before admission/control reads.
+        connection.exec_driver_sql('BEGIN IMMEDIATE')
 Session=sessionmaker(engine,expire_on_commit=False)
 def uid():return str(uuid.uuid4())
 def now():return datetime.now(timezone.utc).isoformat()

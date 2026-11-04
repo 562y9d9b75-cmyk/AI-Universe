@@ -11,6 +11,7 @@ log=logging.getLogger('aiu.runtime')
 stop=threading.Event()
 
 def notify(org,action):
+    if os.getenv('AIU_REDIS_URL')=='':return
     try:
         import redis
         redis.Redis.from_url(os.getenv('AIU_REDIS_URL','redis://127.0.0.1:56379/0'),socket_connect_timeout=.3,socket_timeout=.3).publish('aiu:'+org,action)
@@ -104,7 +105,17 @@ def execute(job):
         audit(s,t.organization_id,'task.'+t.status,t.id,error)
     notify(job['org'],'task.updated')
 
+def acquire_worker_lock():
+    if engine.dialect.name!='sqlite':return None
+    import fcntl
+    handle=Path(engine.url.database).resolve().with_suffix('.worker.lock').open('a')
+    try:fcntl.flock(handle,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except BlockingIOError:
+        handle.close();raise RuntimeError('该本地数据库已有工作进程，不能重复启动')
+    return handle
+
 def main():
+    worker_lock=acquire_worker_lock()  # Retain the OS lock until this process exits.
     from .migrate import migrate
     migrate();logging.basicConfig(level=logging.INFO)
     signal.signal(signal.SIGTERM,lambda *_:stop.set());signal.signal(signal.SIGINT,lambda *_:stop.set())

@@ -8,7 +8,7 @@ async function api(page:Page,url:string,method='GET',body?:unknown){const r=awai
 async function nav(page:Page,label:string){if(await page.getByRole('button',{name:'打开导航',exact:true}).isVisible())await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.locator('nav').getByRole('button',{name:new RegExp('^'+label)}).click()}
 async function waitTask(page:Page,id:string,status:string){await expect.poll(async()=>{const d=await api(page,'/tasks/'+id+'/detail');return d.status},{timeout:20000}).toBe(status);return api(page,'/tasks/'+id+'/detail')}
 
-test('真实 PostgreSQL + 工作进程 + 浏览器完整个人工作流',async({page})=>{
+test(`真实 ${process.env.AIU_E2E_DATABASE||'postgresql'} + 工作进程 + 浏览器完整个人工作流`,async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');await expect(page.getByRole('heading',{name:'创建个人工作空间'})).toBeVisible();
  await page.getByLabel('用户名',{exact:true}).fill('acceptance-owner');
@@ -16,7 +16,7 @@ test('真实 PostgreSQL + 工作进程 + 浏览器完整个人工作流',async({
  await page.getByLabel('公司名称',{exact:true}).fill('AI Universe 验收工作空间');
  await page.getByRole('button',{name:'建立我的 AI 公司'}).click();
  await expect(page.getByRole('heading',{name:'让每一个想法，有人执行。'})).toBeVisible();
- expect((await api(page,'/health')).database).toBe('postgresql');
+ expect((await api(page,'/health')).database).toBe(process.env.AIU_E2E_DATABASE||'postgresql');
  await page.screenshot({path:path.join(evidence,'desktop-dashboard.png'),fullPage:true});
  await nav(page,'AI 员工');
  await expect(page.locator('.agent-card')).toHaveCount(8);
@@ -80,5 +80,5 @@ test('真实 PostgreSQL + 工作进程 + 浏览器完整个人工作流',async({
  await page.screenshot({path:path.join(evidence,'desktop-dark.png'),fullPage:true});
  expect(errors).toEqual([]);
  const oldTask=root.id;await api(page,'/organizations','POST',{name:'隔离工作空间'});expect(await api(page,'/tasks')).toHaveLength(0);expect((await page.request.get('/api/tasks/'+oldTask+'/detail')).status()).toBe(404);
- fs.writeFileSync(path.join(evidence,'acceptance-summary.json'),JSON.stringify({database:'postgresql',runtime:'separate worker process',agents:3,artifact_formats:8,versions:2,workflow:'passed',webgl:'rendered',viewports:[{width:1440,height:1000},{width:390,height:844}],paid_calls:0,page_errors:errors,completed_at:new Date().toISOString()},null,2));
+ fs.writeFileSync(path.join(evidence,'acceptance-summary.json'),JSON.stringify({database:process.env.AIU_E2E_DATABASE||'postgresql',runtime:'separate worker process',agents:3,artifact_formats:8,versions:2,workflow:'passed',webgl:'rendered',viewports:[{width:1440,height:1000},{width:390,height:844}],paid_calls:0,page_errors:errors,completed_at:new Date().toISOString()},null,2));
 });
